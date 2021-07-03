@@ -1,0 +1,83 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2012                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      T;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 0 0 1 0 0 0];
+
+
+internalField   uniform 273;
+
+boundaryField
+{
+    Manikin
+    {
+        type            zeroGradient;
+    }
+    Internal_Wall
+    {
+        type            zeroGradient;
+    }
+    Inlet
+    {
+        type            fixedValue;
+        value           uniform 293;
+    }
+    Outlet
+    {
+        type            fixedValue;
+        value           uniform 273;
+    }
+    Exposed_Wall
+    {
+        type            codedFixedValue;
+        value           uniform 273;
+        name            tempProfile;
+        code            #{
+              const fvPatch& boundaryPatch = patch();
+              const vectorField& Cf = boundaryPatch.Cf();
+              scalarField& field = *this; 
+              const scalar y0 = 0;
+              const scalar y1 = 1;
+              const scalar y2 = 2;
+              const scalar y3 = 2.5;
+              const scalar t0 = 296.15;
+              const scalar t1 = 297.15;
+              const scalar t2 = 298.65;
+              const scalar t3 = 301.15;
+
+              forAll(Cf, faceI)
+              {
+                 const scalar y = Cf[faceI].y();
+                 if(y==y0) {field[faceI] = scalar(t0);};
+                 if(y>y0&&y<y1)
+                 {field[faceI] = t0 + ((t1-t0)/(y1-y0))*(y-y0);}; 
+                 if(y==y1) {field[faceI] = scalar(t1);};
+                 if(y>y1&&y<y2)
+                 {field[faceI] = t1 + ((t2-t1)/(y2-y1))*(y-y1);};
+                 if(y==y2) {field[faceI] = scalar(t2);};
+                 if(y>y2&&y<y3)
+                 {field[faceI] = t2 + ((t3-t2)/(y3-y2))*(y-y2);};
+                 if(y==y3) {field[faceI] = scalar(t3);};
+
+              }
+ 
+
+            #};
+    }
+}
+
+
+// ************************************************************************* //
